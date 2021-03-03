@@ -1,0 +1,20 @@
+{
+  "name": "react-native-zoom-us",
+  "version": "2.0.2",
+  "description": "React-native bridge for ZoomUs SDK",
+  "homepage": "https://github.com/tientruongvan1995/react-native-zoom-us",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postversion": "git push && git push --tags"
+  },
+  "keywords": [
+    "react-native",
+    "zoom.us"
+  ],
+  "author": "tientruongvan1995",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">0.41.2"
+  }
+}

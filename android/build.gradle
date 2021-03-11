@@ -33,7 +33,7 @@ android {
 allprojects {
     repositories {
         flatDir {
-            dirs "$rootDir/../react-native-zoom-us/android/libs"
+            dirs "$rootDir/../react-native-zoom-sdk-custom/android/libs"
         }
     }
 }

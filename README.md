@@ -1,5 +1,5 @@
 
-# react-native-zoom-us
+# react-native-zoom-sdk-custom
 ### Forked by TienTruongVan
 
 This is a minimum bridge of https://github.com/zoom/zoom-sdk-android and https://github.com/zoom/zoom-sdk-ios
@@ -10,11 +10,11 @@ Pull requests are welcome.
 
 ## Getting started
 
-`$ npm install react-native-zoom-us`
+`$ npm install react-native-zoom-sdk-custom`
 
 ### Mostly automatic installation
 
-`$ react-native link react-native-zoom-us`
+`$ react-native link react-native-zoom-sdk-custom`
 
 #### Extra steps for Android
 
@@ -24,7 +24,7 @@ it is also required to manually go to your project's `android/build.gradle` and 
 allprojects {
     repositories {
         flatDir {
-            dirs "$rootDir/../node_modules/react-native-zoom-us/android/libs"
+            dirs "$rootDir/../node_modules/react-native-zoom-sdk-custom/android/libs"
         }
         ...
     }
@@ -43,7 +43,7 @@ android {
 }
 ```
 
-Note: In `android/app/build.gradle` I tried to set up `compile project(':react-native-zoom-us')` with `transitive=false`
+Note: In `android/app/build.gradle` I tried to set up `compile project(':react-native-zoom-sdk-custom')` with `transitive=false`
 and it compiled well, but the app then crashes after running with initialize/meeting listener.
 So the above solution seems to be the best for now.
 
@@ -56,21 +56,21 @@ So the above solution seems to be the best for now.
 
 2. In XCode, in your main project go to `General` tab, expand `Linked Frameworks and Libraries` and add `MobileRTC.framework`:
 * choose `Add other...`
-* navigate to `../node_modules/react-native-zoom-us/ios/libs`
+* navigate to `../node_modules/react-native-zoom-sdk-custom/ios/libs`
 * choose `MobileRTC.framework`
 
 3. In XCode, in your main project go to `General` tab, expand `Embedded Binaries` and add `MobileRTC.framework` from the list - should be at `Frameworks`.
 
 4. In XCode, in your main project go to `Build Phases` tab, expand `Copy Bundle Resources` and add `MobileRTCResources.bundle`:
 * choose `Add other...`
-* navigate to `../node_modules/react-native-zoom-us/ios/libs`
+* navigate to `../node_modules/react-native-zoom-sdk-custom/ios/libs`
 * choose `MobileRTCResources.bundle`
 * choose `Create folder references` and uncheck `Copy files if needed`
 Note: if you do not have `Copy Bundle Resources` you can add it by clicking on top-left `+` sign
 
 5. In XCode, in your main project go to `Build Settings` tab:
 * search for `Enable Bitcode` and make sure it is set to `NO`
-* search for `Framework Search Paths` and add `$(SRCROOT)/../node_modules/react-native-zoom-us/ios/libs` with `non-recursive`
+* search for `Framework Search Paths` and add `$(SRCROOT)/../node_modules/react-native-zoom-sdk-custom/ios/libs` with `non-recursive`
 
 6. In XCode, in your main project go to `Info` tab and add the following keys with appropriate description:
 * `NSCameraUsageDescription`
@@ -84,7 +84,7 @@ Note: if you do not have `Copy Bundle Resources` you can add it by clicking on t
 #### iOS
 
 1. In XCode, in the project navigator, right click `Libraries` ➜ `Add Files to [your project's name]`
-2. Go to `node_modules` ➜ `react-native-zoom-us` and add `RNZoomUs.xcodeproj`
+2. Go to `node_modules` ➜ `react-native-zoom-sdk-custom` and add `RNZoomUs.xcodeproj`
 3. In XCode, in the project navigator, select your project. Add `libRNZoomUs.a` to your project's `Build Phases` ➜ `Link Binary With Libraries`
 4. Run your project (`Cmd+R`)<
 5. Follow [Mostly automatic installation-> Extra steps for iOS](#extra-steps-for-ios)
@@ -96,19 +96,19 @@ Note: if you do not have `Copy Bundle Resources` you can add it by clicking on t
   - Add `new RNZoomUsPackage()` to the list returned by the `getPackages()` method
 2. Append the following lines to `android/settings.gradle`:
   	```
-  	include ':react-native-zoom-us'
-  	project(':react-native-zoom-us').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-zoom-us/android')
+  	include ':react-native-zoom-sdk-custom'
+  	project(':react-native-zoom-sdk-custom').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-zoom-sdk-custom/android')
   	```
 3. Insert the following lines inside the dependencies block in `android/app/build.gradle`:
   	```
-      compile project(':react-native-zoom-us')
+      compile project(':react-native-zoom-sdk-custom')
   	```
 4. Follow [Mostly automatic installation-> Extra steps for Android](#extra-steps-for-android)
 
 
 ## Usage
 ```ts
-import ZoomUs from 'react-native-zoom-us';
+import ZoomUs from 'react-native-zoom-sdk-custom';
 
 await ZoomUs.initialize(
   config.zoom.appKey,
@@ -142,4 +142,4 @@ await ZoomUs.joinMeetingWithPassword(
   'Enter password here'
 );
 ```
-See demo usage of this library: https://github.com/mieszko4/react-native-zoom-us-test
+See demo usage of this library: https://github.com/mieszko4/react-native-zoom-sdk-custom-test

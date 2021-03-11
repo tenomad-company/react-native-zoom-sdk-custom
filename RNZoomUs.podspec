@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   # s.license      = { :type => "MIT", :file => "FILE_LICENSE" }
   s.author             = { "author" => "author@domain.cn" }
   s.platform     = :ios, "8.0"
-  s.source       = { :git => "https://github.com/tientruongvan1995/react-native-zoom-us.git", :tag => "master" }
+  s.source       = { :git => "https://github.com/tenomad-company/react-native-zoom-sdk-custom.git", :tag => "master" }
   s.source_files  = "ios/**/*.{h,m}"
   s.requires_arc = true
   s.libraries = "sqlite3", "z.1.2.5", "c++"

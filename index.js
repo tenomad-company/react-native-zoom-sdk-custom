@@ -1,5 +1,5 @@
 
-import { NativeEventEmitter, NativeModules, Platform, requireNativeComponent } from 'react-native';
+import { NativeEventEmitter, NativeModules, requireNativeComponent } from 'react-native';
 const { RNZoomUs } = NativeModules;
 const RNZoomEmitter = new NativeEventEmitter(RNZoomUs);
 
@@ -51,6 +51,8 @@ class ZoomUs {
     disconnectAudio = () => RNZoomUs.disconnectAudio();
     switchAudioMute = () => RNZoomUs.switchAudioMute();
     // Android Only
+    checkAudioPermission = (title, message) => RNZoomUs.checkAudioPermission(title, message);
+    initConfigAudio = () => RNZoomUs.initConfigAudio();
     switchLoudSpeaker = () => RNZoomUs.switchLoudSpeaker();
     getLoudSpeakerStatus = () => RNZoomUs.getLoudSpeakerStatus();
     isAudioConnected = () => RNZoomUs.isAudioConnected();

@@ -38,6 +38,8 @@ build/
 .gradle
 local.properties
 *.iml
+android/.settings
+android/.project
 
 # BUCK
 buck-out/

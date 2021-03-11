@@ -23,8 +23,10 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import us.zoom.sdk.CameraDevice;
 import us.zoom.sdk.FreeMeetingNeedUpgradeType;
 import us.zoom.sdk.InMeetingAudioController;
 import us.zoom.sdk.InMeetingChatController;
@@ -79,8 +81,6 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     public void enableCustomUI() {
         MeetingSettingsHelper helper = ZoomSDK.getInstance().getMeetingSettingsHelper();
         helper.setCustomizedMeetingUIEnabled(true);
-        helper.setAutoConnectVoIPWhenJoinMeeting(true);
-        helper.setMuteMyMicrophoneWhenJoinMeeting(false);
         helper.enableForceAutoStartMyVideoWhenJoinMeeting(true);
     }
 
@@ -332,13 +332,28 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     public void switchCamera(final Promise promise) {
         final InMeetingVideoController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingVideoController();
         if (ctrl.canSwitchCamera()) {
-            reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ctrl.switchToNextCamera();
-                    promise.resolve(true);
+            final List<CameraDevice> devices = ctrl.getCameraDeviceList();
+            if (devices != null && devices.size() > 2) {
+                List<String> itemLabelList = new ArrayList<>();
+                for (CameraDevice device : devices) {
+                    itemLabelList.add(device.getDeviceName());
                 }
-            });
+                String[] itemLabels = itemLabelList.toArray(new String[0]);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getCurrentActivity());
+                builder.setTitle("Select camera");
+                builder.setItems(itemLabels, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int i) {
+                        ctrl.switchCamera(devices.get(i).getDeviceId());
+                        promise.resolve(true);
+                    }
+                });
+                builder.show();
+            } else {
+                ctrl.switchToNextCamera();
+                promise.resolve(true);
+            }
         } else {
             promise.reject("ERR_CANNOT_SWITCH_CAMERA", "Cannot switch camera");
         }
@@ -427,7 +442,7 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     }
 
     @ReactMethod
-    public void initConfigAudio() {
+    public void initConfigAudio(Promise promise) {
         final InMeetingAudioController inMeetingAudioController = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
         boolean isAudioConnected = inMeetingAudioController.isAudioConnected();
         Log.d(TAG, "isAudioConnected: " + isAudioConnected);
@@ -435,11 +450,9 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
         if (!isAudioConnected) {
             inMeetingAudioController.muteMyAudio(false);
             inMeetingAudioController.connectAudioWithVoIP();
+            Log.d(TAG, "initConfigAudio completed");
         }
-    }
-
-    public void checkAudioPermission() {
-        checkAudioPermission(null, null, null);
+        promise.resolve(true);
     }
 
     @ReactMethod
@@ -663,8 +676,8 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     }
 
     @Override
-    public void onActiveSpeakerVideoUserChanged(long l) {
-
+    public void onActiveSpeakerVideoUserChanged(long id) {
+        Log.d(TAG, "onActiveSpeakerVideoUserChanged: " + id);
     }
 
     @Override
@@ -678,8 +691,8 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     }
 
     @Override
-    public void onUserVideoStatusChanged(long l, VideoStatus videoStatus) {
-
+    public void onUserVideoStatusChanged(long id, VideoStatus videoStatus) {
+        Log.d(TAG, "onUserVideoStatusChanged: " + id + " " + videoStatus);
     }
 
     @Override
@@ -714,7 +727,6 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     @Override
     public void onUserAudioTypeChanged(long id) {
         Log.d(TAG, "onUserAudioTypeChanged: " + id);
-
     }
 
     @Override

@@ -28,7 +28,7 @@ export const ZoomEndReason = {
     END_BY_SDK_CONNECTION_BROKEN: 7,
 }
 
-class ZoomUs {
+class ZoomSDK {
     // ----- CALL ACTIONS ----
     initialize =  (params, settings) => RNZoomUs.initialize(params, settings);
     startMeeting =  (params) => RNZoomUs.startMeeting(params);
@@ -89,4 +89,4 @@ class ZoomUs {
     offMeetingChatReceived = callback => RNZoomEmitter.removeListener(ZoomEvent.MEETING_CHAT_RECEIVED, callback);
 }
 
-export default new ZoomUs();
+export default new ZoomSDK();

@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2FDAB53D25FB720700B87702 /* MobileRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2FDAB53C25FB720700B87702 /* MobileRTC.framework */; platformFilter = ios; };
 		35B9664A2139997D009ECAC1 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35B966492139997D009ECAC1 /* CoreBluetooth.framework */; };
 		35B9664C2139998B009ECAC1 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35B9664B2139998B009ECAC1 /* VideoToolbox.framework */; };
 		B3E7B58A1CC2AC0600A0062D /* RNZoomUs.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNZoomUs.m */; };
@@ -26,7 +27,7 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNZoomUs.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNZoomUs.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		35B96644213998A6009ECAC1 /* MobileRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileRTC.framework; path = libs/MobileRTC.framework; sourceTree = "<group>"; };
+		2FDAB53C25FB720700B87702 /* MobileRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileRTC.framework; path = libs/MobileRTC.framework; sourceTree = "<group>"; };
 		35B96647213998D0009ECAC1 /* MobileRTCResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = MobileRTCResources.bundle; path = libs/MobileRTCResources.bundle; sourceTree = "<group>"; };
 		35B966492139997D009ECAC1 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		35B9664B2139998B009ECAC1 /* VideoToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = VideoToolbox.framework; path = System/Library/Frameworks/VideoToolbox.framework; sourceTree = SDKROOT; };
@@ -40,6 +41,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				35B9664C2139998B009ECAC1 /* VideoToolbox.framework in Frameworks */,
+				2FDAB53D25FB720700B87702 /* MobileRTC.framework in Frameworks */,
 				35B9664A2139997D009ECAC1 /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -58,9 +60,9 @@
 		35B96643213998A4009ECAC1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2FDAB53C25FB720700B87702 /* MobileRTC.framework */,
 				35B9664B2139998B009ECAC1 /* VideoToolbox.framework */,
 				35B966492139997D009ECAC1 /* CoreBluetooth.framework */,
-				35B96644213998A6009ECAC1 /* MobileRTC.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

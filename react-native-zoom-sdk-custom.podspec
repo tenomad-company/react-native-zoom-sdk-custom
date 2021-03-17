@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.source_files        = "ios/**/*.{h,m}"
   s.requires_arc        = true
   s.libraries           = "sqlite3", "z.1.2.5", "c++"
-  s.vendored_frameworks = "ios/libs/MobileRTC.framework", "ios/libs/MobileRTCScreenShare.framework"
+  s.vendored_frameworks = "ios/lib/MobileRTC.framework", "ios/lib/MobileRTCScreenShare.framework"
   s.dependency "React"
 end
 

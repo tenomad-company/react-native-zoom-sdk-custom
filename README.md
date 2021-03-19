@@ -49,35 +49,16 @@ So the above solution seems to be the best for now.
 
 #### Extra steps for iOS
 
-1. In XCode, in your main project go to `General` tab, expand `Linked Frameworks and Libraries` and add the following libraries:
-* `libsqlite3.tbd`
-* `libstdc++.6.0.9.tbd`
-* `libz.1.2.5.tbd`
-
-2. In XCode, in your main project go to `General` tab, expand `Linked Frameworks and Libraries` and add `MobileRTC.framework`:
-* choose `Add other...`
-* navigate to `../node_modules/react-native-zoom-sdk-custom/ios/libs`
-* choose `MobileRTC.framework`
-
-3. In XCode, in your main project go to `General` tab, expand `Embedded Binaries` and add `MobileRTC.framework` from the list - should be at `Frameworks`.
-
-4. In XCode, in your main project go to `Build Phases` tab, expand `Copy Bundle Resources` and add `MobileRTCResources.bundle`:
-* choose `Add other...`
-* navigate to `../node_modules/react-native-zoom-sdk-custom/ios/libs`
-* choose `MobileRTCResources.bundle`
-* choose `Create folder references` and uncheck `Copy files if needed`
-Note: if you do not have `Copy Bundle Resources` you can add it by clicking on top-left `+` sign
-
-5. In XCode, in your main project go to `Build Settings` tab:
-* search for `Enable Bitcode` and make sure it is set to `NO`
-* search for `Framework Search Paths` and add `$(SRCROOT)/../node_modules/react-native-zoom-sdk-custom/ios/libs` with `non-recursive`
-
-6. In XCode, in your main project go to `Info` tab and add the following keys with appropriate description:
+1. In XCode, in your main project go to `Info` tab and add the following keys with appropriate description:
 * `NSCameraUsageDescription`
 * `NSMicrophoneUsageDescription`
 * `NSPhotoLibraryUsageDescription`
 
-6. Because this package includes Zoom SDK that works for both simulator and real device, when releasing to app store you may encounter problem with unsupported architecure. Please follow this answer to add script in `Build Phases` that filters out unsupported architectures: https://stackoverflow.com/questions/30547283/submit-to-app-store-issues-unsupported-architecture-x86. You may want to modify the script to be more specific, i.e. replace `'*.framework'` with `'MobileRTC.framework'`.
+2. In Podfile, add:
+```
+  pod 'ZoomSDK', :git => 'https://github.com/tenomad-company/zoom-sdk-ios.git'
+```
+3. Because this package includes Zoom SDK that works for both simulator and real device, when releasing to app store you may encounter problem with unsupported architecure. Please follow this answer to add script in `Build Phases` that filters out unsupported architectures: https://stackoverflow.com/questions/30547283/submit-to-app-store-issues-unsupported-architecture-x86. You may want to modify the script to be more specific, i.e. replace `'*.framework'` with `'MobileRTC.framework'`.
 
 ### Manual installation
 

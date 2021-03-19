@@ -12,11 +12,9 @@ Pod::Spec.new do |s|
   s.author              = package['author']
   s.platform            = :ios, "8.0"
   s.source              = { :git => "https://github.com/tenomad-company/react-native-zoom-sdk-custom.git", :tag => "master" }
-  s.source_files        = "ios/**/*.{h,m}"
+  s.source_files        = "ios/**/*.{h,m,swift}"
   s.requires_arc        = true
   s.libraries           = "sqlite3", "z.1.2.5", "c++"
-  s.vendored_frameworks = "ios/libs/MobileRTC.framework", "ios/libs/MobileRTCScreenShare.framework"
   s.dependency "React"
+  s.xcconfig = { 'FRAMEWORK_SEARCH_PATHS' => ['"${PODS_ROOT}/ZoomSDK"', '"${PODS_ROOT}/../ZoomSDK"'] }
 end
-
-  

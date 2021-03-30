@@ -351,8 +351,13 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
                 });
                 builder.show();
             } else {
-                ctrl.switchToNextCamera();
-                promise.resolve(true);
+                reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ctrl.switchToNextCamera();
+                        promise.resolve(true);
+                    }
+                });
             }
         } else {
             promise.reject("ERR_CANNOT_SWITCH_CAMERA", "Cannot switch camera");

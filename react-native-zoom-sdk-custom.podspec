@@ -15,6 +15,7 @@ Pod::Spec.new do |s|
   s.source_files        = "ios/**/*.{h,m,swift}"
   s.requires_arc        = true
   s.libraries           = "sqlite3", "z.1.2.5", "c++"
-  s.dependency "React"
   s.xcconfig = { 'FRAMEWORK_SEARCH_PATHS' => ['"${PODS_ROOT}/ZoomSDK"', '"${PODS_ROOT}/../ZoomSDK"'] }
+  s.dependency "React"
+  s.dependency "ZoomSDK"
 end

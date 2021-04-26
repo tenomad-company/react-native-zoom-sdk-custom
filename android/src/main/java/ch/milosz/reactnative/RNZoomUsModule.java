@@ -191,7 +191,8 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
             final MeetingService meetingService = zoomSDK.getMeetingService();
 
             JoinMeetingOptions opts = new JoinMeetingOptions();
-            if (paramMap.hasKey("participantID")) opts.participant_id = paramMap.getString("participantID");
+            if (paramMap.hasKey("participantID"))
+                opts.participant_id = paramMap.getString("participantID");
             if (paramMap.hasKey("noAudio")) opts.no_audio = paramMap.getBoolean("noAudio");
             if (paramMap.hasKey("noVideo")) opts.no_video = paramMap.getBoolean("noVideo");
 
@@ -427,14 +428,20 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     }
 
     @ReactMethod
-    public void switchAudioMute(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        if (ctrl.isMyAudioMuted()) {
-            if (ctrl.canUnmuteMyAudio()) ctrl.muteMyAudio(false);
-        } else {
-            ctrl.muteMyAudio(true);
-        }
-        promise.resolve(true);
+    public void switchAudioMute(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (ctrl.isMyAudioMuted()) {
+                    if (ctrl.canUnmuteMyAudio()) ctrl.muteMyAudio(false);
+                } else {
+                    ctrl.muteMyAudio(true);
+                }
+                promise.resolve(true);
+            }
+        });
     }
 
     @ReactMethod
@@ -447,17 +454,22 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     }
 
     @ReactMethod
-    public void initConfigAudio(Promise promise) {
+    public void initConfigAudio(final Promise promise) {
         final InMeetingAudioController inMeetingAudioController = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        boolean isAudioConnected = inMeetingAudioController.isAudioConnected();
-        Log.d(TAG, "isAudioConnected: " + isAudioConnected);
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                boolean isAudioConnected = inMeetingAudioController.isAudioConnected();
+                Log.d(TAG, "isAudioConnected: " + isAudioConnected);
 
-        if (!isAudioConnected) {
-            inMeetingAudioController.muteMyAudio(false);
-            inMeetingAudioController.connectAudioWithVoIP();
-            Log.d(TAG, "initConfigAudio completed");
-        }
-        promise.resolve(true);
+                if (!isAudioConnected) {
+                    inMeetingAudioController.muteMyAudio(false);
+                    inMeetingAudioController.connectAudioWithVoIP();
+                    Log.d(TAG, "initConfigAudio complet ed");
+                }
+                promise.resolve(true);
+            }
+        });
     }
 
     @ReactMethod
@@ -470,7 +482,8 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
                 // sees the explanation, try again to request the permission.
 
                 if (title == null || title.isEmpty()) title = "Microphone Required";
-                if (message == null || message.isEmpty()) message = "This application need to access microphone to make a call meeting";
+                if (message == null || message.isEmpty())
+                    message = "This application need to access microphone to make a call meeting";
 
                 new AlertDialog.Builder(getReactApplicationContext().getCurrentActivity())
                         .setTitle(title)
@@ -811,6 +824,11 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
 
     @Override
     public void onClosedCaptionReceived(String s) {
+
+    }
+
+    @Override
+    public void onRecordingStatus(RecordingStatus recordingStatus) {
 
     }
 }

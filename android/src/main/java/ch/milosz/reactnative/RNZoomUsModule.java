@@ -380,57 +380,92 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
 
     // You can check whether the audio is connected by calling `isAudioConnected` method:
     @ReactMethod
-    public void isAudioConnected(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        promise.resolve(ctrl.isAudioConnected());
+    public void isAudioConnected(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                promise.resolve(ctrl.isAudioConnected());
+            }
+        });
     }
 
     // You can check whether your audio is muted by calling `isMyAudioMuted` method:
     @ReactMethod
-    public void isMyAudioMuted(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        promise.resolve(ctrl.isMyAudioMuted());
+    public void isMyAudioMuted(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                promise.resolve(ctrl.isMyAudioMuted());
+            }
+        });
     }
 
     // You can check whether you can unmute your audio by calling `canUnmuteMyAudio` method:
     @ReactMethod
-    public void canUnmuteMyAudio(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        promise.resolve(ctrl.canUnmuteMyAudio());
+    public void canUnmuteMyAudio(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ctrl.connectAudioWithVoIP();
+                promise.resolve(ctrl.canUnmuteMyAudio());
+            }
+        });
     }
 
     // If you would like to connect audio with "Voice over IP", you can implement the `connectAudioWithVoIP` method:
     @ReactMethod
-    public void connectAudioWithVoIP(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        ctrl.connectAudioWithVoIP();
-        promise.resolve(true);
+    public void connectAudioWithVoIP(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ctrl.connectAudioWithVoIP();
+                promise.resolve(true);
+            }
+        });
     }
 
     // Check whether you can switch audio output.
     @ReactMethod
-    public void canSwitchAudioOutput(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        promise.resolve(ctrl.canSwitchAudioOutput());
+    public void canSwitchAudioOutput(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                promise.resolve(ctrl.canSwitchAudioOutput());
+            }
+        });
     }
 
     @ReactMethod
-    public void getLoudSpeakerStatus(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        promise.resolve(ctrl.getLoudSpeakerStatus());
+    public void getLoudSpeakerStatus(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                promise.resolve(ctrl.getLoudSpeakerStatus());
+            }
+        });
     }
 
     @ReactMethod
-    public void disconnectAudio(Promise promise) {
-        InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-        ctrl.disconnectAudio();
-        promise.resolve(true);
+    public void disconnectAudio(final Promise promise) {
+        final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ctrl.disconnectAudio();
+                promise.resolve(true);
+            }
+        });
     }
 
     @ReactMethod
     public void switchAudioMute(final Promise promise) {
         final InMeetingAudioController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingAudioController();
-
         reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {

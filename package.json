@@ -1,6 +1,6 @@
 {
   "name": "react-native-zoom-sdk-custom",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "React-native bridge for ZoomUs SDK",
   "homepage": "https://github.com/tenomad-company/react-native-zoom-sdk-custom",
   "main": "index.js",

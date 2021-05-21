@@ -65,6 +65,7 @@ class ZoomSDK {
     disconnectAudio = () => RNZoomUs.disconnectAudio();
     // iOS Only
     connectMyAudio = (on) => RNZoomUs.connectMyAudio(on);
+    getMyAudioType = () => RNZoomUs.getMyAudioType(); // return: voip | telephony | none
     switchAudioSource = () => RNZoomUs.switchAudioSource();
 
     // ----- EVENTS ----

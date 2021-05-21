@@ -291,6 +291,22 @@ RCT_EXPORT_METHOD(connectMyAudio:(BOOL)on
     resolve(@(success));
 }
 
+RCT_EXPORT_METHOD(getMyAudioType:(RCTPromiseResolveBlock)resolve
+                  withReject:(RCTPromiseRejectBlock)reject) {
+    MobileRTCAudioType res = [[[MobileRTC sharedRTC] getMeetingService] myAudioType];
+    switch (res) {
+        case MobileRTCAudioType_VoIP:
+            resolve(@"voip");
+            break;
+        case MobileRTCAudioType_Telephony:
+            resolve(@"telephony");
+            break;
+        default:
+            resolve(@"none");
+            break;
+    }
+}
+
 RCT_EXPORT_METHOD(switchAudioSource:(RCTPromiseResolveBlock)resolve
                   withReject:(RCTPromiseRejectBlock)reject) {
     MobileRTCAudioError error = [[[MobileRTC sharedRTC] getMeetingService] switchMyAudioSource];

@@ -45,6 +45,8 @@ class ZoomSDK {
     switchVideoMute = () => RNZoomUs.switchVideoMute();
     switchCamera = () => RNZoomUs.switchCamera();
     // Android Only
+    isMyVideoMuted = () => RNZoomUs.isMyVideoMuted();
+    canUnmuteMyVideo = () => RNZoomUs.canUnmuteMyVideo();
     checkVideoRotation = () => RNZoomUs.checkVideoRotation();
 
     // ----- AUDIO ACTIONS ----

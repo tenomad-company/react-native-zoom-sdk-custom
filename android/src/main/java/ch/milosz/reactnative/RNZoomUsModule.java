@@ -314,6 +314,28 @@ public class RNZoomUsModule extends ReactContextBaseJavaModule implements ZoomSD
     }
 
     @ReactMethod
+    public void isMyVideoMuted(final Promise promise) {
+        final InMeetingVideoController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingVideoController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                promise.resolve(ctrl.isMyVideoMuted());
+            }
+        });
+    }
+
+    @ReactMethod
+    public void canUnmuteMyVideo(final Promise promise) {
+        final InMeetingVideoController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingVideoController();
+        reactContext.getCurrentActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                promise.resolve(ctrl.canUnmuteMyVideo());
+            }
+        });
+    }
+
+    @ReactMethod
     public void switchVideoMute(final Promise promise) {
         final InMeetingVideoController ctrl = ZoomSDK.getInstance().getInMeetingService().getInMeetingVideoController();
         reactContext.getCurrentActivity().runOnUiThread(new Runnable() {

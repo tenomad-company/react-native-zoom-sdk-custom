@@ -1,20 +1,29 @@
 {
   "name": "react-native-zoom-sdk-custom",
-  "version": "2.1.0",
+  "version": "5.10.0",
   "description": "React-native bridge for ZoomUs SDK",
   "homepage": "https://github.com/tenomad-company/react-native-zoom-sdk-custom",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "npx tsc --noEmit false",
     "postversion": "git push && git push --tags"
   },
   "keywords": [
     "react-native",
-    "zoom"
+    "zoom.us"
   ],
   "author": "tientruongvan1995",
   "license": "MIT",
   "peerDependencies": {
-    "react-native": ">0.41.2"
+    "react-native": ">0.60.0"
+  },
+  "devDependencies": {
+    "@types/invariant": "^2.2.34",
+    "@types/react-native": "^0.64.4",
+    "typescript": "4.0.5"
+  },
+  "dependencies": {
+    "invariant": "^2.2.4"
   }
 }

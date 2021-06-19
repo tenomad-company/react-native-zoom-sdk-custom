@@ -1,79 +1,47 @@
+#import <ReplayKit/ReplayKit.h>
 #import "RNZoomUs.h"
 
 @implementation RNZoomUs
 {
-    BOOL isInitialized;
-    RCTPromiseResolveBlock initializePromiseResolve;
-    RCTPromiseRejectBlock initializePromiseReject;
-    RCTPromiseResolveBlock meetingPromiseResolve;
-    RCTPromiseRejectBlock meetingPromiseReject;
+  BOOL isInitialized;
+  BOOL shouldAutoConnectAudio;
+  BOOL hasObservers;
+  RCTPromiseResolveBlock initializePromiseResolve;
+  RCTPromiseRejectBlock initializePromiseReject;
+  RCTPromiseResolveBlock meetingPromiseResolve;
+  RCTPromiseRejectBlock meetingPromiseReject;
+  // If screenShareExtension is set, the Share Content > Screen option will automatically be
+  // enabled in the UI
+  NSString *screenShareExtension;
+
+  NSString *jwtToken;
 }
 
 - (instancetype)init {
-    if (self = [super init]) {
-        isInitialized = NO;
-        initializePromiseResolve = nil;
-        initializePromiseReject = nil;
-        meetingPromiseResolve = nil;
-        meetingPromiseReject = nil;
-    }
-    return self;
+  if (self = [super init]) {
+    isInitialized = NO;
+    initializePromiseResolve = nil;
+    initializePromiseReject = nil;
+    shouldAutoConnectAudio = nil;
+    meetingPromiseResolve = nil;
+    meetingPromiseReject = nil;
+    screenShareExtension = nil;
+    jwtToken = nil;
+  }
+  return self;
 }
 
 + (BOOL)requiresMainQueueSetup
 {
-    return NO;
+  return NO;
 }
 
 - (dispatch_queue_t)methodQueue
 {
-    return dispatch_get_main_queue();
-}
-
-- (NSArray<NSString *> *)supportedEvents
-{
-    return @[
-        @"user_joined",
-        @"user_leaved",
-        @"user_waiting",
-        @"user_joined_active",
-        @"meeting_ready",
-        @"meeting_join_confirmed",
-        @"meeting_view_initialized",
-        @"meeting_view_destroyed",
-        @"meeting_chat_received"
-    ];
+  return dispatch_get_main_queue();
 }
 
 RCT_EXPORT_MODULE()
-
-- (void)enableCustomUI {
-    [[[MobileRTC sharedRTC] getMeetingSettings] setEnableCustomMeeting:YES];
-    [[[MobileRTC sharedRTC] getMeetingSettings] setAutoConnectInternetAudio:YES];
-    [[[MobileRTC sharedRTC] getMeetingSettings] setMuteVideoWhenJoinMeeting:NO];
-    [[[MobileRTC sharedRTC] getMeetingSettings] setMuteAudioWhenJoinMeeting:NO];
-}
-
-- (UIViewController *)topViewControllerWithRootViewController:(UIViewController*)rootViewController {
-    if ([rootViewController isKindOfClass:[UITabBarController class]]) {
-        UITabBarController* tabBarController = (UITabBarController*)rootViewController;
-        return [self topViewControllerWithRootViewController:tabBarController.selectedViewController];
-    } else if ([rootViewController isKindOfClass:[UINavigationController class]]) {
-        UINavigationController* navigationController = (UINavigationController*)rootViewController;
-        return [self topViewControllerWithRootViewController:navigationController.visibleViewController];
-    } else if (rootViewController.presentedViewController) {
-        UIViewController* presentedViewController = rootViewController.presentedViewController;
-        return [self topViewControllerWithRootViewController:presentedViewController];
-    } else {
-        return rootViewController;
-    }
-}
-
-/*
- * ----------------------------------
- * Basic
- * ----------------------------------
- */
 
 RCT_EXPORT_METHOD(
   initialize: (NSDictionary *)data
@@ -93,22 +61,30 @@ RCT_EXPORT_METHOD(
     initializePromiseResolve = resolve;
     initializePromiseReject = reject;
 
+    screenShareExtension = data[@"iosScreenShareExtensionId"];
+    jwtToken = data[@"jwtToken"];
+
     MobileRTCSDKInitContext *context = [[MobileRTCSDKInitContext alloc] init];
     context.domain = data[@"domain"];
     context.enableLog = YES;
     context.locale = MobileRTC_ZoomLocale_Default;
 
     //Note: This step is optional, Method is uesd for iOS Replaykit Screen share integration,if not,just ignore this step.
-    // context.appGroupId = @"group.zoom.us.MobileRTCSampleExtensionReplayKit";
-    BOOL initSuccess = [[MobileRTC sharedRTC] initialize:context];
-    [[[MobileRTC sharedRTC] getMeetingSettings] disableShowVideoPreviewWhenJoinMeeting:settings[@"disableShowVideoPreviewWhenJoinMeeting"]];
-    [self enableCustomUI];
-      
+    context.appGroupId = data[@"iosAppGroupId"];
+    BOOL initializeSuc = [[MobileRTC sharedRTC] initialize:context];
+    [[[MobileRTC sharedRTC] getMeetingSettings]
+      disableShowVideoPreviewWhenJoinMeeting:settings[@"disableShowVideoPreviewWhenJoinMeeting"]];
+
     MobileRTCAuthService *authService = [[MobileRTC sharedRTC] getAuthService];
-    if (authService) {
+    if (authService)
+    {
       authService.delegate = self;
-      authService.clientKey = data[@"clientKey"];
-      authService.clientSecret = data[@"clientSecret"];
+      if (jwtToken != nil) {
+        authService.jwtToken = data[@"jwtToken"];
+      } else {
+        authService.clientKey = data[@"clientKey"];
+        authService.clientSecret = data[@"clientSecret"];
+      }
 
       [authService sdkAuth];
     } else {
@@ -132,18 +108,16 @@ RCT_EXPORT_METHOD(
     MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
     if (ms) {
       ms.delegate = self;
-      ms.customizedUImeetingDelegate = self;
-        
-      [self enableCustomUI];
 
       MobileRTCMeetingStartParam4WithoutLoginUser * params = [[MobileRTCMeetingStartParam4WithoutLoginUser alloc]init];
       params.userName = data[@"userName"];
       params.meetingNumber = data[@"meetingNumber"];
       params.userID = data[@"userId"];
-      params.userType = MobileRTCUserType_APIUser;
+      params.userType = data[@"userType"];
       params.zak = data[@"zoomAccessToken"];
+
       MobileRTCMeetError startMeetingResult = [ms startMeetingWithStartParam:params];
-      NSLog(@"startMeeting, startMeetingResult= %d", startMeetingResult);
+      NSLog(@"startMeeting, startMeetingResult=%d", startMeetingResult);
     }
   } @catch (NSError *ex) {
       reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing startMeeting", ex);
@@ -157,14 +131,13 @@ RCT_EXPORT_METHOD(
 )
 {
   @try {
+    shouldAutoConnectAudio = data[@"autoConnectAudio"];
     meetingPromiseResolve = resolve;
     meetingPromiseReject = reject;
 
     MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
     if (ms) {
       ms.delegate = self;
-      ms.customizedUImeetingDelegate = self;
-      [self enableCustomUI];
 
       MobileRTCMeetingJoinParam * joinParam = [[MobileRTCMeetingJoinParam alloc]init];
       joinParam.userName = data[@"userName"];
@@ -175,7 +148,7 @@ RCT_EXPORT_METHOD(
       joinParam.webinarToken =  data[@"webinarToken"];
       joinParam.noAudio = data[@"noAudio"];
       joinParam.noVideo = data[@"noVideo"];
-        
+
       MobileRTCMeetError joinMeetingResult = [ms joinMeetingWithJoinParam:joinParam];
 
       NSLog(@"joinMeeting, joinMeetingResult=%d", joinMeetingResult);
@@ -185,375 +158,278 @@ RCT_EXPORT_METHOD(
   }
 }
 
+// todo should be deleted
 RCT_EXPORT_METHOD(
-    leaveMeeting:(RCTPromiseResolveBlock)resolve
-    withReject:(RCTPromiseRejectBlock)reject
-    ) {
+  joinMeetingWithPassword: (NSString *)displayName
+  withMeetingNo: (NSString *)meetingNo
+  withPassword: (NSString *)password
+  withResolve: (RCTPromiseResolveBlock)resolve
+  withReject: (RCTPromiseRejectBlock)reject
+)
+{
+  @try {
+    meetingPromiseResolve = resolve;
+    meetingPromiseReject = reject;
+
     MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
     if (ms) {
-        [ms leaveMeetingWithCmd:LeaveMeetingCmd_Leave];
-        resolve(@"Room Left successfully");
-    } else {
-        reject(@"ERR_UNEXPECTED_EXCEPTION", @"AuthService not found", [NSError init]);
+      ms.delegate = self;
+
+      MobileRTCMeetingJoinParam * joinParam = [[MobileRTCMeetingJoinParam alloc]init];
+      joinParam.userName = displayName;
+      joinParam.meetingNumber = meetingNo;
+      joinParam.password = password;
+
+      MobileRTCMeetError joinMeetingResult = [ms joinMeetingWithJoinParam:joinParam];
+      NSLog(@"joinMeeting, joinMeetingResult=%d", joinMeetingResult);
     }
+  } @catch (NSError *ex) {
+      reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing joinMeeting", ex);
+  }
 }
 
-RCT_EXPORT_METHOD(
-    endMeeting:(RCTPromiseResolveBlock)resolve
-    withReject:(RCTPromiseRejectBlock)reject
-    ) {
+RCT_EXPORT_METHOD(leaveMeeting: (RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  @try {
     MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms) {
-        [ms leaveMeetingWithCmd:LeaveMeetingCmd_End];
-        resolve(@"Room End successfully");
-    } else {
-        reject(@"ERR_UNEXPECTED_EXCEPTION", @"AuthService not found", [NSError init]);
-    }
+    if (!ms) return;
+    [ms leaveMeetingWithCmd:LeaveMeetingCmd_Leave];
+  } @catch (NSError *ex) {
+    reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing leaveMeeting", ex);
+  }
 }
 
-/*
- * ----------------------------------
- * User actions
- * ----------------------------------
- */
-
-RCT_EXPORT_METHOD(
-    getCurrentID:(RCTPromiseResolveBlock)resolve
-    withReject:(RCTPromiseRejectBlock)reject
-    ) {
-    MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms) {
-        NSUInteger uID = [ms myselfUserID];
-        NSNumber *payload = [[NSNumber alloc] initWithUnsignedLong:uID];
-        resolve(payload);
-    } else {
-        reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing getCurrentID", [[NSError init] initWithText:@"MobileRTCMeetingService not found!"]);
-    }
+RCT_EXPORT_METHOD(connectAudio: (RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  @try {
+    [self connectAudio];
+  } @catch (NSError *ex) {
+    reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing connectAudio", ex);
+  }
 }
 
-RCT_EXPORT_METHOD(
-    getUsers:(RCTPromiseResolveBlock)resolve
-    withReject:(RCTPromiseRejectBlock)reject
-    ) {
-    MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms) {
-        NSArray *users = [ms getInMeetingUserList];
-        resolve(users);
-    } else {
-        reject(@"ERR_UNEXPECTED_EXCEPTION", @"Executing getCurrentID", [[NSError init] initWithText:@"MobileRTCMeetingService not found!"]);
-    }
+- (void)connectAudio {
+  MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
+  if (!ms) return;
+  [ms connectMyAudio: YES];
+  [ms muteMyAudio: NO];
+  NSLog(@"connectAudio");
 }
-
-/*
- * ----------------------------------
- * Video actions
- * ----------------------------------
- */
-
-RCT_EXPORT_METHOD(pinVideo:(NSUInteger)userID
-                  withResolve:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject
-                  ) {
-    [[[MobileRTC sharedRTC] getMeetingService] pinVideo:YES withUser:userID];
-    resolve(@(YES));
-}
-
-RCT_EXPORT_METHOD(switchVideoMute:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms && [ms canUnmuteMyVideo]) {
-        BOOL mute = [ms isSendingMyVideo];
-        MobileRTCVideoError error = [ms muteMyVideo:mute];
-        NSLog(@"switchVideoMute: %d",error);
-    }
-    resolve(@(YES));
-}
-
-RCT_EXPORT_METHOD(switchCamera:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms) [ms switchMyCamera];
-    resolve(@(YES));
-}
-
-/*
- * ----------------------------------
- * Audio actions
- * ----------------------------------
- */
-
-RCT_EXPORT_METHOD(connectMyAudio:(BOOL)on
-                  withResolve:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    BOOL success = [[[MobileRTC sharedRTC] getMeetingService] connectMyAudio:on];
-    
-    [[[MobileRTC sharedRTC] getMeetingService] myAudioType];
-    resolve(@(success));
-}
-
-RCT_EXPORT_METHOD(getMyAudioType:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    MobileRTCAudioType res = [[[MobileRTC sharedRTC] getMeetingService] myAudioType];
-    switch (res) {
-        case MobileRTCAudioType_VoIP:
-            resolve(@"voip");
-            break;
-        case MobileRTCAudioType_Telephony:
-            resolve(@"telephony");
-            break;
-        default:
-            resolve(@"none");
-            break;
-    }
-}
-
-RCT_EXPORT_METHOD(switchAudioSource:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    MobileRTCAudioError error = [[[MobileRTC sharedRTC] getMeetingService] switchMyAudioSource];
-    if (error == MobileRTCAudioError_Success) {
-        resolve(@"Switch Audio Success!");
-    } else {
-        reject(@"ERR_UNEXPECTED_EXCEPTION",
-               [NSString stringWithFormat:@"SwitchMyAudioSource: %d", error],
-               [NSError errorWithDomain:@"us.zoom.sdk" code:error userInfo:nil]);
-    }
-}
-
-RCT_EXPORT_METHOD(switchAudioMute:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms)
-    {
-        MobileRTCAudioType audioType = [ms myAudioType];
-        NSLog(@"switchAudioMute, %lu", audioType);
-        
-        switch (audioType)
-        {
-            case MobileRTCAudioType_VoIP: //voip
-            case MobileRTCAudioType_Telephony: //phone
-            {
-                if ([ms canUnmuteMyAudio]) {
-                    BOOL isMuted = [ms isMyAudioMuted];
-                    [ms muteMyAudio:!isMuted];
-                }
-                break;
-            }
-            case MobileRTCAudioType_None:
-            {
-                //Supported VOIP
-                if ([ms isSupportedVOIP]) {
-                    NSLog(@"isSupportedVOIP");
-                    
-                    if (@available(iOS 8, *)) {
-                        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"To hear others\n please join audio", @"")
-                                                                                                 message:nil
-                                                                                          preferredStyle:UIAlertControllerStyleAlert];
-                        
-                        [alertController addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Call via Internet", @"")
-                                                                            style:UIAlertActionStyleDefault
-                                                                          handler:^(UIAlertAction *action) {
-                            //Join VOIP
-                            MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-                            if (ms)[ms connectMyAudio:YES];
-                        }]];
-                        
-                        [alertController addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", nil)
-                                                                            style:UIAlertActionStyleCancel
-                                                                          handler:^(UIAlertAction *action) {}]
-                        ];
-                        
-                        UIViewController *rootViewController = [self topViewControllerWithRootViewController:[[[UIApplication sharedApplication] delegate] window].rootViewController];
-                        [rootViewController presentViewController:alertController animated:YES completion:nil];
-                    }
-                }
-                break;
-            }
-        }
-    }
-}
-
-/*
- * ----------------------------------
- * Chat actions
- * ----------------------------------
- */
-
-RCT_EXPORT_METHOD(sendMessage:(NSString *)message
-                  withResolve:(RCTPromiseResolveBlock)resolve
-                  withReject:(RCTPromiseRejectBlock)reject) {
-    MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
-    if (ms) {
-        [ms sendChatToGroup:MobileRTCChatGroup_All WithContent:message];
-        resolve(@"Success");
-    } else {
-        reject(
-            @"ERR_ZOOM_SEND_MESSAGE",
-            [NSString stringWithFormat:@"Error: %@", @"Meeting Service Not Found"],
-            [NSError errorWithDomain:@"us.zoom.sdk" code:0 userInfo:nil]
-        );
-    }
-}
-
-/*
- * ----------------------------------
- * Handlers
- * ----------------------------------
- */
-
-// MARK: MobileRTCAuthDelegate
 
 - (void)onMobileRTCAuthReturn:(MobileRTCAuthError)returnValue {
-    NSLog(@"nZoomSDKInitializeResult, errorCode=%d", returnValue);
-    if (returnValue != MobileRTCAuthError_Success) {
-        initializePromiseReject(
-            @"ERR_ZOOM_INITIALIZATION",
-            [NSString stringWithFormat:@"Error: %d", returnValue],
-            [NSError errorWithDomain:@"us.zoom.sdk" code:returnValue userInfo:nil]
-            );
-    } else {
-        initializePromiseResolve(@"Initialize Zoom SDK successfully.");
-    }
+  NSLog(@"nZoomSDKInitializeResult, errorCode=%d", returnValue);
+  [self sendEventWithName:@"AuthEvent" event:[self authErrorName:returnValue]];
+  if(returnValue != MobileRTCAuthError_Success) {
+    initializePromiseReject(
+      @"ERR_ZOOM_INITIALIZATION",
+      [NSString stringWithFormat:@"Error: %d", returnValue],
+      [NSError errorWithDomain:@"us.zoom.sdk" code:returnValue userInfo:nil]
+    );
+  } else {
+    initializePromiseResolve(@"Initialize Zoom SDK successfully.");
+  }
 }
 
-// MARK: MobileRTCMeetingServiceDelegate
 - (void)onMeetingReturn:(MobileRTCMeetError)errorCode internalError:(NSInteger)internalErrorCode {
-    NSLog(@"onMeetingReturn, error=%d, internalErrorCode=%zd", errorCode, internalErrorCode);
+  NSLog(@"onMeetingReturn, error=%d, internalErrorCode=%zd", errorCode, internalErrorCode);
+  [self sendEventWithName:@"MeetingEvent" event:[self meetErrorName:errorCode]];
 
-    if (!meetingPromiseResolve) {
-        return;
-    }
+  if (!meetingPromiseResolve) {
+    return;
+  }
 
-    if (errorCode != MobileRTCMeetError_Success) {
-        meetingPromiseReject(
-            @"ERR_ZOOM_MEETING",
-            [NSString stringWithFormat:@"Error: %d, internalErrorCode=%zd", errorCode, internalErrorCode],
-            [NSError errorWithDomain:@"us.zoom.sdk" code:errorCode userInfo:nil]
-            );
-    } else {
-        meetingPromiseResolve(@"Connected to zoom meeting");
-    }
+  if (errorCode != MobileRTCMeetError_Success) {
+    meetingPromiseReject(
+      @"ERR_ZOOM_MEETING",
+      [NSString stringWithFormat:@"Error: %d, internalErrorCode=%zd", errorCode, internalErrorCode],
+      [NSError errorWithDomain:@"us.zoom.sdk" code:errorCode userInfo:nil]
+    );
+  } else {
+    meetingPromiseResolve(@"Connected to zoom meeting");
+  }
 
-    meetingPromiseResolve = nil;
-    meetingPromiseReject = nil;
+  meetingPromiseResolve = nil;
+  meetingPromiseReject = nil;
 }
 
 - (void)onMeetingStateChange:(MobileRTCMeetingState)state {
-    NSLog(@"onMeetingStatusChanged, meetingState=%d", state);
+  NSLog(@"onMeetingStatusChanged, meetingState=%d", state);
 
-    if (state == MobileRTCMeetingState_InMeeting || state == MobileRTCMeetingState_Idle) {
-        if (!meetingPromiseResolve) {
-            return;
-        }
+  // TODO Send event with status to be consistent with android
+  // [self sendEventWithName:@"MeetingEvent" event:@"success" status:state];
 
-        NSLog(@"onMeetingStatusChanged resolved!");
-        meetingPromiseResolve(@"Connected to zoom meeting");
+  if (state == MobileRTCMeetingState_InMeeting && shouldAutoConnectAudio == YES) {
+    [self connectAudio];
+  }
 
-        meetingPromiseResolve = nil;
-        meetingPromiseReject = nil;
-    }
-}
-
-- (void)onMicrophoneStatusError:(MobileRTCMicrophoneError)error {
-    NSLog(@"onMicrophoneStatusError, %lu", error);
-}
-
-- (void)onMeetingError:(MobileRTCMeetError)errorCode message:(NSString *)message {
-    NSLog(@"onMeetingError, errorCode=%d, message=%@", errorCode, message);
-
+  if (state == MobileRTCMeetingState_InMeeting || state == MobileRTCMeetingState_Idle) {
     if (!meetingPromiseResolve) {
-        return;
+      return;
     }
 
-    if ([message isEqualToString:@"success"]) {
-        meetingPromiseResolve(@"Connected to zoom meeting");
-    } else {
-        meetingPromiseReject(
-            @"ERR_ZOOM_MEETING",
-            [NSString stringWithFormat:@"Error: %d, internalErrorCode=%@", errorCode, message],
-            [NSError errorWithDomain:@"us.zoom.sdk" code:errorCode userInfo:nil]
-            );
-    }
+    meetingPromiseResolve(@"Connected to zoom meeting");
 
     meetingPromiseResolve = nil;
     meetingPromiseReject = nil;
+  }
 }
 
-- (void)onWaitingRoomStatusChange:(BOOL)needWaiting
-{
-    if (needWaiting) {
-        NSLog(@"needWaiting true");
-    } else {
-        NSLog(@"needWaiting false");
-    }
+- (void)onMeetingError:(MobileRTCMeetError)errorCode message:(NSString *)message {
+  NSLog(@"onMeetingError, errorCode=%d, message=%@", errorCode, message);
+  [self sendEventWithName:@"MeetingEvent" event:[self meetErrorName:errorCode]];
+
+  if (!meetingPromiseResolve) {
+    return;
+  }
+
+  if (errorCode != MobileRTCMeetError_Success) {
+    meetingPromiseReject(
+      @"ERR_ZOOM_MEETING",
+      [NSString stringWithFormat:@"Error: %d, internalErrorCode=%@", errorCode, message],
+      [NSError errorWithDomain:@"us.zoom.sdk" code:errorCode userInfo:nil]
+    );
+  } else {
+    meetingPromiseResolve(@"Connected to zoom meeting");
+  }
+
+  shouldAutoConnectAudio = nil;
+  meetingPromiseResolve = nil;
+  meetingPromiseReject = nil;
 }
 
-- (void)onJBHWaitingWithCmd:(JBHCmd)cmd
-{
-    NSLog(@"onJBHWaitingWithCmd %d", cmd);
-    BOOL isWaiting = (cmd == JBHCmd_Show);
-    [self sendEventWithName:@"user_waiting" body:@(isWaiting)];
-}
-
-- (void)onMeetingReady {
-    NSLog(@"===== onMeetingReady");
-    [self sendEventWithName:@"meeting_ready" body:@(YES)];
-}
-
-- (void)onJoinMeetingConfirmed {
-    NSLog(@"===== onJoinMeetingConfirmed");
-    [self sendEventWithName:@"meeting_join_confirmed" body:@(YES)];
-}
-
-/*!
- @brief The function will be invoked once the user joins the meeting.
- @result The ID of user who joins the meeting.
- */
-- (void)onSinkMeetingUserJoin:(NSUInteger)userID {
-    NSLog(@"===== onSinkMeetingUserJoin %lu", userID);
-    [self sendEventWithName:@"user_joined" body:@(userID)];
-    NSLog(@"===== myAudioType %lu", [[[MobileRTC sharedRTC] getMeetingService] myAudioType]);
-}
-
-/*!
- @brief The function will be invoked once the user leaves the meeting.
- @result The ID of user who leaves the meeting.
- */
-- (void)onSinkMeetingUserLeft:(NSUInteger)userID {
-    NSLog(@"===== onSinkMeetingUserLeft %lu", userID);
-    [self sendEventWithName:@"user_leaved" body:@(userID)];
-}
-
-- (void)onSinkMeetingActiveVideo:(NSUInteger)userID
-{
-    NSLog(@"===== onSinkMeetingActiveVideo %lu", userID);
-    [self sendEventWithName:@"user_joined_active" body:@(userID)];
-}
-
-- (void)onInMeetingChat:(NSString *)messageID {
-    NSLog(@"===== onInMeetingChat %@", messageID);
-    MobileRTCMeetingChat *chat = [[[MobileRTC sharedRTC] getMeetingService] meetingChatByID:messageID];
-    [self sendEventWithName:@"meeting_chat_received" body:chat];
-    NSLog(@"===== %@", chat);
-}
-
-// MARK: MobileRTCWaitingRoomServiceDelegate
-- (void)onWaitingRoomUserJoin:(NSUInteger)userId {
-    NSLog(@"===== onWaitingRoomUserJoin %lu", userId);
-}
-
-- (void)onWaitingRoomUserLeft:(NSUInteger)userId {
-    NSLog(@"===== onWaitingRoomUserLeft %lu", userId);
-}
-
-// MARK: MobileRTCCustomizedUIMeetingDelegate
-- (void)onInitMeetingView {
-    NSLog(@"onInitMeetingView");
-    [self sendEventWithName:@"meeting_view_initialized" body:@(YES)];
+- (void)onMeetingEndedReason:(MobileRTCMeetingEndReason)reason {
+  [self sendEventWithName:@"MeetingEvent" event:[self meetingEndReasonName:reason]];
 }
 
 - (void)onDestroyMeetingView {
-    NSLog(@"onDestroyMeetingView");
-    [self sendEventWithName:@"meeting_view_destroyed" body:@(YES)];
+    //
 }
 
+- (void)onInitMeetingView {
+    //
+}
+
+#pragma mark - Screen share functionality
+
+- (void)onSinkMeetingActiveShare:(NSUInteger)userID {
+  MobileRTCMeetingService *ms = [[MobileRTC sharedRTC] getMeetingService];
+  if (ms) {
+    if (userID == 0) {
+      [self sendEventWithName:@"MeetingEvent" event:@"screenShareStopped"];
+    } else if (userID == [ms myselfUserID]){
+      [self sendEventWithName:@"MeetingEvent" event:@"screenShareStarted"];
+    }
+  }
+}
+
+- (void)onClickShareScreen:(UIViewController *)parentVC {
+  if (@available(iOS 12.0, *)) {
+    CGRect frame = parentVC.view.bounds;
+    RPSystemBroadcastPickerView *pickerView = [[RPSystemBroadcastPickerView alloc] initWithFrame:frame];
+    pickerView.preferredExtension = screenShareExtension;
+    SEL buttonPressed = NSSelectorFromString(@"buttonPressed:");
+    if ([pickerView respondsToSelector:buttonPressed]) {
+      [pickerView performSelector:buttonPressed withObject:nil];
+    }
+  }
+}
+
+- (BOOL)respondsToSelector:(SEL)aSelector
+{
+  if (aSelector == @selector(onClickShareScreen:)) {
+    return screenShareExtension != nil;
+  }
+  return [super respondsToSelector:aSelector];
+}
+
+#pragma mark - React Native event emitters and event handling
+
+- (void)startObserving {
+  hasObservers = YES;
+}
+
+- (void)stopObserving {
+  hasObservers = NO;
+}
+
+- (NSArray<NSString *> *)supportedEvents {
+  return @[@"AuthEvent", @"MeetingEvent"];
+}
+
+- (void)sendEventWithName:(NSString *)name event:(NSString *)event {
+  if (hasObservers) {
+    [self sendEventWithName:name body:@{@"event": event}];
+  }
+}
+
+- (NSString *)authErrorName:(MobileRTCAuthError)error {
+  switch (error) {
+    case MobileRTCAuthError_ClientIncompatible: return @"clientIncompatible";
+    case MobileRTCAuthError_Success: return @"success";
+    case MobileRTCAuthError_AccountNotEnableSDK: return @"accountNotEnableSDK"; // iOS only
+    case MobileRTCAuthError_AccountNotSupport: return @"accountNotSupport"; // iOS only
+    case MobileRTCAuthError_KeyOrSecretEmpty: return @"keyOrSecretEmpty"; // iOS only
+    case MobileRTCAuthError_KeyOrSecretWrong: return @"keyOrSecretWrong"; // iOS only
+    case MobileRTCAuthError_NetworkIssue: return @"networkIssue"; // iOS only
+    case MobileRTCAuthError_None: return @"none"; // iOS only
+    case MobileRTCAuthError_OverTime: return @"overTime"; // iOS only
+    case MobileRTCAuthError_ServiceBusy: return @"serviceBusy"; // iOS only
+    default: return @"unknown";
+  }
+}
+
+- (NSString *)meetErrorName:(MobileRTCMeetError)error {
+  switch (error) {
+    case MobileRTCMeetError_InvalidArguments: return @"invalidArguments";
+    case MobileRTCMeetError_MeetingClientIncompatible: return @"meetingClientIncompatible";
+    case MobileRTCMeetError_MeetingLocked: return @"meetingLocked";
+    case MobileRTCMeetError_MeetingNotExist: return @"meetingNotExist";
+    case MobileRTCMeetError_MeetingOver: return @"meetingOver";
+    case MobileRTCMeetError_MeetingRestricted: return @"meetingRestricted";
+    case MobileRTCMeetError_MeetingRestrictedJBH: return @"meetingRestrictedJBH";
+    case MobileRTCMeetError_MeetingUserFull: return @"meetingUserFull";
+    case MobileRTCMeetError_MMRError: return @"mmrError";
+    case MobileRTCMeetError_NetworkError: return @"networkError";
+    case MobileRTCMeetError_NoMMR: return @"noMMR";
+    case MobileRTCMeetError_RegisterWebinarDeniedEmail: return @"registerWebinarDeniedEmail";
+    case MobileRTCMeetError_RegisterWebinarEnforceLogin: return @"registerWebinarEnforceLogin";
+    case MobileRTCMeetError_RegisterWebinarFull: return @"registerWebinarFull";
+    case MobileRTCMeetError_RegisterWebinarHostRegister: return @"registerWebinarHostRegister";
+    case MobileRTCMeetError_RegisterWebinarPanelistRegister: return @"registerWebinarPanelistRegister";
+    case MobileRTCMeetError_RemovedByHost: return @"removedByHost";
+    case MobileRTCMeetError_SessionError: return @"sessionError";
+    case MobileRTCMeetError_Success: return @"success";
+    case MobileRTCMeetError_AudioAutoStartError: return @"audioAutoStartError"; // iOS only
+    case MobileRTCMeetError_CannotEmitWebRequest: return @"cannotEmitWebRequest"; // iOS only
+    case MobileRTCMeetError_CannotStartTokenExpire: return @"cannotStartTokenExpire"; // iOS only
+    case MobileRTCMeetError_InAnotherMeeting: return @"inAnotherMeeting"; // iOS only
+    case MobileRTCMeetError_InvalidUserType: return @"invalidUserType"; // iOS only
+    case MobileRTCMeetError_JoinWebinarWithSameEmail: return @"joinWebinarWithSameEmail"; // iOS only
+    case MobileRTCMeetError_MeetingNotStart: return @"meetingNotStart"; // iOS only
+    case MobileRTCMeetError_PasswordError: return @"passwordError"; // iOS only
+    case MobileRTCMeetError_ReconnectError: return @"reconnectError"; // iOS only
+    case MobileRTCMeetError_VanityNotExist: return @"vanityNotExist"; // iOS only
+    case MobileRTCMeetError_VBMaximumNum: return @"vbMaximumNum"; // iOS only
+    case MobileRTCMeetError_VBNoSupport: return @"vbNoSupport"; // iOS only
+    case MobileRTCMeetError_VBRemoveNone: return @"vbRemoveNone"; // iOS only
+    case MobileRTCMeetError_VBSaveImage: return @"vbSaveImage"; // iOS only
+    // _VBSetError has the same value as _VBBase so we are excluding _VBBase
+    case MobileRTCMeetError_VBSetError: return @"vbSetError"; // iOS only
+    case MobileRTCMeetError_VideoError: return @"videoError"; // iOS only
+    case MobileRTCMeetError_WriteConfigFile: return @"writeConfigFile"; // iOS only
+    case MobileRTCMeetError_ZCCertificateChanged: return @"zcCertificateChanged"; // iOS only
+    default: return @"unknown";
+  }
+}
+
+- (NSString *)meetingEndReasonName:(MobileRTCMeetingEndReason)reason {
+  switch (reason) {
+    case MobileRTCMeetingEndReason_EndByHost: return @"endedByHost";
+    case MobileRTCMeetingEndReason_HostEndForAnotherMeeting: return @"endedByHostForAnotherMeeting";
+    case MobileRTCMeetingEndReason_SelfLeave: return @"endedBySelf";
+    case MobileRTCMeetingEndReason_ConnectBroken: return @"endedConnectBroken";
+    case MobileRTCMeetingEndReason_FreeMeetingTimeout: return @"endedFreeMeetingTimeout";
+    case MobileRTCMeetingEndReason_JBHTimeout: return @"endedJBHTimeout";
+    case MobileRTCMeetingEndReason_RemovedByHost: return @"endedRemovedByHost";
+    default: return @"endedUnknownReason";
+  }
+}
 @end
